@@ -22,6 +22,8 @@ using nav_msgs::Odometry;
 using std_msgs::Int32;
 
 using Eigen::Vector3d;
+using Eigen::Vector4d;
+
 using Eigen::Matrix3d;
 
 using std::cout;
@@ -60,7 +62,9 @@ class CoaxCTRL{
     Vector3d I_p_CM;
     Vector3d I_v_CM;
     Vector3d I_a_CM;
-    Vector3d I_g_CM;
+    Vector3d I_W_CM;
+    Vector4d I_q_CM;
+
     
     Vector3d I_p_des;
     Vector3d I_v_des;

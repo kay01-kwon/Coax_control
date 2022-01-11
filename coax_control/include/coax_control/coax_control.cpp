@@ -5,7 +5,7 @@ CoaxCTRL::CoaxCTRL()
     // Constructor
     cout<<"Mass Parameter Setup"<<endl;
     nh.getParam("mass",mass);
-    I_g_CM << 0, 0, mass*g;
+    I_W_CM << 0, 0, mass*g;
 
     cout<<"COM Offset Parameter Setup"<<endl;
     nh.getParam("x_com_off",x_com_off);
@@ -72,9 +72,25 @@ void CoaxCTRL::CallbackDesAcc(const Accel & des_a)
             des_a.linear.z;
 }
 
+void CoaxCTRL::CallbackPose(const Odometry & pose_msg)
+{
+    I_p_CM << pose_msg.pose.pose.position.x,
+            pose_msg.pose.pose.position.y;
+            pose_msg.pose.pose.position.z;
+    
+    I_q_CM << pose_msg.pose.pose.orientation.w,
+            pose_msg.pose.pose.orientation.x,
+            pose_msg.pose.pose.orientation.y,
+            pose_msg.pose.pose.orientation.z;
+    
+    I_v_CM << pose_msg.twist.twist.linear.x,
+            pose_msg.twist.twist.linear.y,
+            pose_msg.twist.twist.linear.z;
+}
+
 void CoaxCTRL::PosControl()
 {
     u_pos = I_a_des 
             + Kp_pos*(I_p_des - I_p_CM) 
-            + Kd_pos*(I_v_des - I_v_CM);
+            + Kd_pos*(I_v_des - I_v_CM) - I_W_CM;
 }
