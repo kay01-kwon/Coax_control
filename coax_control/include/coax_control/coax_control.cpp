@@ -126,22 +126,24 @@ void CoaxCTRL::PosControl()
 
 
     if(thrust > 0){
-        des_roll_pitch(0) = asin((u_pos(0)*cos(des_yaw)+u_pos(1)*sin(des_yaw))/thrust) + hovering_rp(0);
-        des_roll_pitch(1) = asin((u_pos(0)*sin(des_yaw)-u_pos(1)*cos(des_yaw))/thrust/cos(des_roll_pitch(0))) + hovering_rp(1);
+        des_roll_pitch_yaw(0) = asin((u_pos(0)*cos(des_yaw)+u_pos(1)*sin(des_yaw))/thrust) + hovering_rp(0);
+        des_roll_pitch_yaw(1) = asin((u_pos(0)*sin(des_yaw)-u_pos(1)*cos(des_yaw))/thrust/cos(des_roll_pitch_yaw(0))) 
+        + hovering_rp(1);
     }
     else{
-        des_roll_pitch << 0, 0, des_yaw;
+        des_roll_pitch_yaw << 0, 0, des_yaw;
     }
 
-    des_rp_clamping(des_roll_pitch(0),des_roll_pitch(1));
+    des_rp_clamping(des_roll_pitch_yaw(0),des_roll_pitch_yaw(1));
 
 }
 
 void CoaxCTRL::OriControl()
 {
-    u_att = Kp_ori * (des_roll_pitch - roll_pitch_yaw) - Kd_ori*I_w;
+    u_att = Kp_ori * (des_roll_pitch_yaw - roll_pitch_yaw) - Kd_ori*I_w;
     u_att(0) += eq_rp(0);
     u_att(1) += eq_rp(1);
+
 }
 
 void CoaxCTRL::throttle_clamping(double &throttle_ptr)
