@@ -9,6 +9,7 @@
 #include <geometry_msgs/Twist.h>
 
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/UInt16.h>
 #include <std_msgs/Int32.h>
 #include <lm4075e_msgs/Int32.h>
 
@@ -20,6 +21,7 @@ using geometry_msgs::Pose;
 using geometry_msgs::Twist;
 using geometry_msgs::Accel;
 using nav_msgs::Odometry;
+using std_msgs::UInt16;
 using std_msgs::Int32;
 
 using Eigen::Vector2d;
@@ -50,7 +52,7 @@ class CoaxCTRL{
     // Orientation Controller
     void OriControl();
 
-    void throttle_clamping(double &throttle_ptr);
+    void throttle_clamping(uint8_t &throttle_ptr);
 
     void des_rp_clamping(double &des_roll_ptr, double &des_pitch_ptr);
 
@@ -103,8 +105,8 @@ class CoaxCTRL{
     double C_lift;
 
     double thrust;
-    double throttle;
-    Vector3d des_roll_pitch;
+    uint8_t throttle;
+    Vector3d des_roll_pitch_yaw;
     double des_yaw;
 
     const double throttle_max = 10000;
@@ -112,6 +114,10 @@ class CoaxCTRL{
     const double gear_ratio = 4.5;
     const double des_roll_max = 8 * M_PI/180.0;
     const double des_pitch_max = 8 * M_PI/180.0;
+
+    UInt16 throttle_;
+    lm4075e_msgs::Int32 tvc_rp_;
+    Int32 rudder_yaw_;
 };
 
 #endif
