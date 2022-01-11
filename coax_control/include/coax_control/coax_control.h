@@ -71,6 +71,7 @@ class CoaxCTRL{
     Vector3d CM_p_CM_T;
     Vector3d CM_u_CM_T;
     Vector2d eq_rp;
+    Vector2d hovering_rp;
 
     Vector3d I_p_des;
     Vector3d I_v_des;
@@ -92,12 +93,14 @@ class CoaxCTRL{
 
     double C_lift;
 
+    double thrust;
     double throttle;
-    double des_rp;
+    Vector2d des_roll_pitch;
     double des_yaw;
 
     const double throttle_max = 10000;
     const double throttle_min = 8000;
+    const double gear_ratio = 4.5;
 };
 
 #endif

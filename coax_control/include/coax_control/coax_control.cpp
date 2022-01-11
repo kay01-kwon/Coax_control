@@ -17,11 +17,14 @@ CoaxCTRL::CoaxCTRL()
     CM_p_CM_T << CM_x_T, CM_y_T, CM_z_T;
     CM_u_CM_T = CM_p_CM_T.normalized();
 
-    phi = -asin(CM_u_CM_T(1))*180/M_PI;
-    theta = atan2(CM_u_CM_T(0)/cos(phi),CM_u_CM_T(2)/cos(phi))*180/M_PI;
-    eq_rp.setZero();
+    phi = -asin(CM_u_CM_T(1));
+    theta = atan2(CM_u_CM_T(0)/cos(phi),CM_u_CM_T(2)/cos(phi));
     eq_rp << phi, theta; // Roll, pitch (y-x convention)
-    cout<<eq_rp<<endl;
+    hovering_rp = -eq_rp;
+    cout<<"Equlibrium TVC Info: "<<endl;
+    cout<<eq_rp*180.0/M_PI<<endl;
+    cout<<"Hovering Attitude Info: "<<endl;
+    cout<<hovering_rp*180.0/M_PI<<endl;
 
     cout<<"***Get Position Gain Parameter***"<<endl;
     
@@ -104,8 +107,18 @@ void CoaxCTRL::PosControl()
             + Kp_pos*(I_p_des - I_p_CM) 
             + Kd_pos*(I_v_des - I_v_CM)) - I_W_CM;
     
-    throttle = sqrt(u_pos.transpose()*u_pos);
+    thrust = sqrt(u_pos.transpose()*u_pos);
+    throttle = thrust / gear_ratio;
     throttle_clamping(throttle);
+
+    des_roll_pitch(0) = asin((u_pos(0)*cos(des_yaw)+u_pos(1)*sin(des_yaw))/thrust) + hovering_rp(0);
+    des_roll_pitch(1) = asin((u_pos(0)*sin(des_yaw)-u_pos(1)*cos(des_yaw))/thrust/cos(des_roll_pitch(0))) + hovering_rp(1);
+    
+}
+
+void CoaxCTRL::OriControl()
+{
+    
 }
 
 void CoaxCTRL::throttle_clamping(double &throttle_ptr)
