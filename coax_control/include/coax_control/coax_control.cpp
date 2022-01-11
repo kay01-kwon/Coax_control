@@ -68,6 +68,12 @@ void CoaxCTRL::CallbackDesPos(const Pose & des_p)
     I_p_des << des_p.position.x, 
             des_p.position.y, 
             des_p.position.z;
+    
+    I_q_des << des_p.orientation.w,
+            des_p.orientation.x,
+            des_p.orientation.y,
+            des_p.orientation.z;
+
 }
 
 void CoaxCTRL::CallbackDesVel(const Twist & des_v)
@@ -98,6 +104,10 @@ void CoaxCTRL::CallbackPose(const Odometry & pose_msg)
     I_v_CM << pose_msg.twist.twist.linear.x,
             pose_msg.twist.twist.linear.y,
             pose_msg.twist.twist.linear.z;
+
+    I_w << pose_msg.twist.twist.angular.x,
+            pose_msg.twist.twist.angular.y,
+            pose_msg.twist.twist.angular.z;
     
 }
 
@@ -109,16 +119,29 @@ void CoaxCTRL::PosControl()
     
     thrust = sqrt(u_pos.transpose()*u_pos);
     throttle = thrust / gear_ratio;
+
     throttle_clamping(throttle);
 
-    des_roll_pitch(0) = asin((u_pos(0)*cos(des_yaw)+u_pos(1)*sin(des_yaw))/thrust) + hovering_rp(0);
-    des_roll_pitch(1) = asin((u_pos(0)*sin(des_yaw)-u_pos(1)*cos(des_yaw))/thrust/cos(des_roll_pitch(0))) + hovering_rp(1);
-    
+    // To do : Quaternion convention z-x-y --> get yaw
+
+
+    if(thrust > 0){
+        des_roll_pitch(0) = asin((u_pos(0)*cos(des_yaw)+u_pos(1)*sin(des_yaw))/thrust) + hovering_rp(0);
+        des_roll_pitch(1) = asin((u_pos(0)*sin(des_yaw)-u_pos(1)*cos(des_yaw))/thrust/cos(des_roll_pitch(0))) + hovering_rp(1);
+    }
+    else{
+        des_roll_pitch << 0, 0, des_yaw;
+    }
+
+    des_rp_clamping(des_roll_pitch(0),des_roll_pitch(1));
+
 }
 
 void CoaxCTRL::OriControl()
 {
-    
+    u_att = Kp_ori * (des_roll_pitch - roll_pitch_yaw) - Kd_ori*I_w;
+    u_att(0) += eq_rp(0);
+    u_att(1) += eq_rp(1);
 }
 
 void CoaxCTRL::throttle_clamping(double &throttle_ptr)
@@ -129,6 +152,24 @@ void CoaxCTRL::throttle_clamping(double &throttle_ptr)
     if(throttle_ptr < throttle_min)
         throttle_ptr = throttle_min;
 
+}
+
+void CoaxCTRL::des_rp_clamping(double &des_roll_ptr, double &des_pitch_ptr)
+{
+    if (abs(des_roll_ptr) > des_roll_max)
+        des_roll_ptr = des_roll_max * signum(des_roll_ptr);
+
+    if (abs(des_pitch_ptr) > des_pitch_max)
+        des_pitch_ptr = des_pitch_max * signum(des_pitch_ptr);
+}
+
+double CoaxCTRL::signum(double &sign_ptr)
+{
+    if (sign_ptr > 0)
+        return 1.0; 
+    if (sign_ptr < 0)
+        return -1.0;
+    return 0.0;
 }
 
 CoaxCTRL::~CoaxCTRL()

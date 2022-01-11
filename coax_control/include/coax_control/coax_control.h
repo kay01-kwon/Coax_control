@@ -14,6 +14,7 @@
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+#include <cmath>
 
 using geometry_msgs::Pose;
 using geometry_msgs::Twist;
@@ -50,6 +51,10 @@ class CoaxCTRL{
     void OriControl();
 
     void throttle_clamping(double &throttle_ptr);
+
+    void des_rp_clamping(double &des_roll_ptr, double &des_pitch_ptr);
+
+    double signum(double &sign_ptr);
     
     // Destructor
     ~CoaxCTRL();
@@ -64,6 +69,7 @@ class CoaxCTRL{
 
     Vector3d I_p_CM;
     Vector3d I_v_CM;
+    Vector3d I_w;
     Vector3d I_a_CM;
     Vector3d I_W_CM;
     Vector4d I_q_CM;    //qw, qx, qy, qz
@@ -76,8 +82,11 @@ class CoaxCTRL{
     Vector3d I_p_des;
     Vector3d I_v_des;
     Vector3d I_a_des;
+    Vector4d I_q_des;
+    Vector3d roll_pitch_yaw;
 
     Vector3d u_pos;
+    Vector3d u_att;
 
     double mass;
     const double g = -9.81;
@@ -95,12 +104,14 @@ class CoaxCTRL{
 
     double thrust;
     double throttle;
-    Vector2d des_roll_pitch;
+    Vector3d des_roll_pitch;
     double des_yaw;
 
     const double throttle_max = 10000;
     const double throttle_min = 8000;
     const double gear_ratio = 4.5;
+    const double des_roll_max = 8 * M_PI/180.0;
+    const double des_pitch_max = 8 * M_PI/180.0;
 };
 
 #endif
