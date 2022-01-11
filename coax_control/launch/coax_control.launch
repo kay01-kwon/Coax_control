@@ -1,6 +1,8 @@
 <launch>
     <node pkg="coax_control" type="coax_control" name="coax_control" output="screen"/>
         
+        <param name="mass" type="double" value="60"/>
+
         <param name="CM_x_T" type="double" value="0.05"/>
         <param name="CM_y_T" type="double" value="0.08"/>
         <param name="CM_z_T" type="double" value="0.772"/>

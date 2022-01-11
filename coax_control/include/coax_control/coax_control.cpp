@@ -3,11 +3,13 @@
 CoaxCTRL::CoaxCTRL()
 {
     // Constructor
-    cout<<"Mass Parameter Setup"<<endl;
+    cout<<"*****Mass Parameter Setup*****"<<endl;
     nh.getParam("mass",mass);
+    cout<<"Mass (kg): ";
+    cout<<mass<<endl;
     I_W_CM << 0, 0, mass*g;
 
-    cout<<"COM Offset Parameter Setup"<<endl;
+    cout<<"*****COM Offset Parameter Setup*****"<<endl;
     nh.getParam("CM_x_T",CM_x_T);
     nh.getParam("CM_y_T",CM_y_T);
     nh.getParam("CM_z_T",CM_z_T);
@@ -16,17 +18,26 @@ CoaxCTRL::CoaxCTRL()
 
     CM_p_CM_T << CM_x_T, CM_y_T, CM_z_T;
     CM_u_CM_T = CM_p_CM_T.normalized();
+    cout<<CM_p_CM_T<<endl;
 
     phi = -asin(CM_u_CM_T(1));
     theta = atan2(CM_u_CM_T(0)/cos(phi),CM_u_CM_T(2)/cos(phi));
+
     eq_rp << phi, theta; // Roll, pitch (y-x convention)
     hovering_rp = -eq_rp;
-    cout<<"Equlibrium TVC Info: "<<endl;
-    cout<<eq_rp*180.0/M_PI<<endl;
-    cout<<"Hovering Attitude Info: "<<endl;
-    cout<<hovering_rp*180.0/M_PI<<endl;
+    cout<<"*****Equlibrium TVC Info (deg)*****"<<endl;
+    cout<<"Roll : ";
+    cout<<eq_rp(0)*180.0/M_PI<<endl;
+    cout<<"Pitch : ";
+    cout<<eq_rp(1)*180.0/M_PI<<endl;
 
-    cout<<"***Get Position Gain Parameter***"<<endl;
+    cout<<"*****Hovering Attitude Info (deg)*****"<<endl;
+    cout<<"Roll : ";
+    cout<<hovering_rp(0)*180.0/M_PI<<endl;
+    cout<<"Pitch : ";
+    cout<<hovering_rp(1)*180.0/M_PI<<endl;
+
+    cout<<"*****Get Position Gain Parameter*****"<<endl;
     
     nh.getParam("Kp_pos",Kp_pos);
     nh.getParam("Kd_pos",Kd_pos);
@@ -40,17 +51,18 @@ CoaxCTRL::CoaxCTRL()
     cout<<"Kp_ori Gain: "<<Kp_ori<<endl;
     cout<<"Kd_ori Gain: "<<Kd_ori<<endl;
 
-    cout<<"***Get Lift Parameter***"<<endl;
+    cout<<"*****Get Lift Parameter*****"<<endl;
     nh.getParam("C_lift",C_lift);
     cout<<"C lift : "<<C_lift<<endl;
 
-    cout<<"***Subscriber Setup***"<<endl;
+    cout<<"*****Subscriber Setup*****"<<endl;
 
     cout<<"Desired Trajectory Subscriber Setup"<<endl;
 
     cout<<"Estimated Pose Subscriber Setup"<<endl;
     pose_subscriber = nh.subscribe("/mavros/local_position/odom",1,&CoaxCTRL::CallbackPose,this);
 
+    cout<<"*****Publisher Setup*****"<<endl;
     cout<<"Throttle Publisher Setup"<<endl;
     throttle_publisher = nh.advertise<UInt16>("/throttle",1);
     
@@ -143,7 +155,7 @@ void CoaxCTRL::OriControl()
     u_att(0) += eq_rp(0);
     u_att(1) += eq_rp(1);
 
-    // 2. To do : Make tvc_msgs/Float64[2]
+    // 2. To do : Make tvc_msgs/Float64[2] Field roll, pitch
 
     throttle_.data = throttle;
     
