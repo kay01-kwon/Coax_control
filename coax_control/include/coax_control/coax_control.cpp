@@ -8,9 +8,20 @@ CoaxCTRL::CoaxCTRL()
     I_W_CM << 0, 0, mass*g;
 
     cout<<"COM Offset Parameter Setup"<<endl;
-    nh.getParam("x_com_off",x_com_off);
-    nh.getParam("y_com_off",y_com_off);
-    nh.getParam("z_com_off",z_com_off);
+    nh.getParam("CM_x_T",CM_x_T);
+    nh.getParam("CM_y_T",CM_y_T);
+    nh.getParam("CM_z_T",CM_z_T);
+
+    double phi,theta;
+
+    CM_p_CM_T << CM_x_T, CM_y_T, CM_z_T;
+    CM_u_CM_T = CM_p_CM_T.normalized();
+
+    phi = -asin(CM_u_CM_T(1))*180/M_PI;
+    theta = atan2(CM_u_CM_T(0)/cos(phi),CM_u_CM_T(2)/cos(phi))*180/M_PI;
+    eq_rp.setZero();
+    eq_rp << phi, theta; // Roll, pitch (y-x convention)
+    cout<<eq_rp<<endl;
 
     cout<<"***Get Position Gain Parameter***"<<endl;
     
@@ -26,10 +37,8 @@ CoaxCTRL::CoaxCTRL()
     cout<<"Kp_ori Gain: "<<Kp_ori<<endl;
     cout<<"Kd_ori Gain: "<<Kd_ori<<endl;
 
-    nh.getParam("C_lift",C_lift);
-    
     cout<<"***Get Lift Parameter***"<<endl;
-
+    nh.getParam("C_lift",C_lift);
     cout<<"C lift : "<<C_lift<<endl;
 
     cout<<"***Subscriber Setup***"<<endl;
@@ -86,11 +95,30 @@ void CoaxCTRL::CallbackPose(const Odometry & pose_msg)
     I_v_CM << pose_msg.twist.twist.linear.x,
             pose_msg.twist.twist.linear.y,
             pose_msg.twist.twist.linear.z;
+    
 }
 
 void CoaxCTRL::PosControl()
 {
-    u_pos = I_a_des 
+    u_pos = mass*(I_a_des
             + Kp_pos*(I_p_des - I_p_CM) 
-            + Kd_pos*(I_v_des - I_v_CM) - I_W_CM;
+            + Kd_pos*(I_v_des - I_v_CM)) - I_W_CM;
+    
+    throttle = sqrt(u_pos.transpose()*u_pos);
+    throttle_clamping(throttle);
+}
+
+void CoaxCTRL::throttle_clamping(double &throttle_ptr)
+{
+    if (throttle_ptr > throttle_max)
+        throttle_ptr = throttle_max;
+    
+    if(throttle_ptr < throttle_min)
+        throttle_ptr = throttle_min;
+
+}
+
+CoaxCTRL::~CoaxCTRL()
+{
+
 }

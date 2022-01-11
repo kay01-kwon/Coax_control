@@ -21,6 +21,7 @@ using geometry_msgs::Accel;
 using nav_msgs::Odometry;
 using std_msgs::Int32;
 
+using Eigen::Vector2d;
 using Eigen::Vector3d;
 using Eigen::Vector4d;
 
@@ -48,6 +49,8 @@ class CoaxCTRL{
     // Orientation Controller
     void OriControl();
 
+    void throttle_clamping(double &throttle_ptr);
+    
     // Destructor
     ~CoaxCTRL();
 
@@ -63,22 +66,23 @@ class CoaxCTRL{
     Vector3d I_v_CM;
     Vector3d I_a_CM;
     Vector3d I_W_CM;
-    Vector4d I_q_CM;
+    Vector4d I_q_CM;    //qw, qx, qy, qz
 
-    
+    Vector3d CM_p_CM_T;
+    Vector3d CM_u_CM_T;
+    Vector2d eq_rp;
+
     Vector3d I_p_des;
     Vector3d I_v_des;
     Vector3d I_a_des;
 
     Vector3d u_pos;
 
-    Vector3d CM_p_CM2T;
-
     double mass;
     const double g = -9.81;
-    double x_com_off;
-    double y_com_off;
-    double z_com_off;
+    double CM_x_T;
+    double CM_y_T;
+    double CM_z_T;
 
     double Kp_pos;
     double Kd_pos;
@@ -91,6 +95,9 @@ class CoaxCTRL{
     double throttle;
     double des_rp;
     double des_yaw;
+
+    const double throttle_max = 10000;
+    const double throttle_min = 8000;
 };
 
 #endif
