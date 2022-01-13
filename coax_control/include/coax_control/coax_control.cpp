@@ -67,10 +67,15 @@ CoaxCTRL::CoaxCTRL()
     throttle_publisher = nh.advertise<UInt16>("/throttle",1);
     
     cout<<"TVC roll pitch Publisher Setup"<<endl;
-    tvc_publisher = nh.advertise<lm4075e_msgs::Int32>("/des_rp",1);
+    tvc_publisher = nh.advertise<rollpitch>("/des_rp",1);
 
     cout<<"Rudder Publisher Setup"<<endl;
     rudder_publisher = nh.advertise<Int32>("/des_yaw",1);
+
+    I_q_CM.setZero();
+    I_q_CM(0) = 1;
+    I_q_des.setZero();
+    I_q_des(0) = 1;
 
 }
 
@@ -133,13 +138,21 @@ void CoaxCTRL::PosControl()
 
     throttle_clamping(throttle);
 
-    // 1. To do : Quaternion convention z-x-y --> get yaw
+    des_yaw = -2*atan2(qz_des,qw_des);
 
+    roll_pitch_yaw(0) = asin(2*(qy*qz + qw*qx));
+    
+    roll_pitch_yaw(1) = atan2(2*(qx*qz - qw*qy)/cos(roll_pitch_yaw(0)),
+    (1-2*qx*qx))/cos(roll_pitch_yaw(0));
+    
+    roll_pitch_yaw(2) = atan2(2*(qx*qz - qw*qy)/cos(roll_pitch_yaw(0)),
+    (1-2*qx*qx))/cos(roll_pitch_yaw(0));
 
     if(thrust > 0){
         des_roll_pitch_yaw(0) = asin((u_pos(0)*cos(des_yaw)+u_pos(1)*sin(des_yaw))/thrust) + hovering_rp(0);
         des_roll_pitch_yaw(1) = asin((u_pos(0)*sin(des_yaw)-u_pos(1)*cos(des_yaw))/thrust/cos(des_roll_pitch_yaw(0))) 
         + hovering_rp(1);
+        des_roll_pitch_yaw(2) = des_yaw;
     }
     else{
         des_roll_pitch_yaw << 0, 0, des_yaw;
@@ -155,17 +168,14 @@ void CoaxCTRL::OriControl()
     u_att(0) += eq_rp(0);
     u_att(1) += eq_rp(1);
 
-    // 2. To do : Make tvc_msgs/Float64[2] Field roll, pitch
-
     throttle_.data = throttle;
-    
+    tvc_rp_.roll = u_att(0);
+    tvc_rp_.pitch = u_att(1);
     rudder_yaw_.data = u_att(2);
 
     throttle_publisher.publish(throttle_);
-
+    tvc_publisher.publish(tvc_rp_);
     rudder_publisher.publish(rudder_yaw_);
-    
-
 }
 
 void CoaxCTRL::throttle_clamping(uint8_t &throttle_ptr)

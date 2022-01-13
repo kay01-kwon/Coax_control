@@ -15,6 +15,7 @@
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+#include <tvc_control/rollpitch.h>
 #include <cmath>
 
 using geometry_msgs::Pose;
@@ -23,6 +24,7 @@ using geometry_msgs::Accel;
 using nav_msgs::Odometry;
 using std_msgs::UInt16;
 using std_msgs::Int32;
+using tvc_control::rollpitch;
 
 using Eigen::Vector2d;
 using Eigen::Vector3d;
@@ -75,6 +77,13 @@ class CoaxCTRL{
     Vector3d I_a_CM;
     Vector3d I_W_CM;
     Vector4d I_q_CM;    //qw, qx, qy, qz
+    double &qw = I_q_CM(0);
+    double &qx = I_q_CM(1);
+    double &qy = I_q_CM(2);
+    double &qz = I_q_CM(3);
+
+    
+
 
     Vector3d CM_p_CM_T;
     Vector3d CM_u_CM_T;
@@ -108,6 +117,11 @@ class CoaxCTRL{
     uint8_t throttle;
     Vector3d des_roll_pitch_yaw;
     double des_yaw;
+    double &qw_des = I_q_des(0);
+    double &qx_des = I_q_des(1);
+    double &qy_des = I_q_des(2);
+    double &qz_des = I_q_des(3);
+    
 
     const double throttle_max = 10000;
     const double throttle_min = 8000;
@@ -116,7 +130,7 @@ class CoaxCTRL{
     const double des_pitch_max = 8 * M_PI/180.0;
 
     UInt16 throttle_;
-    lm4075e_msgs::Int32 tvc_rp_;
+    rollpitch tvc_rp_;
     Int32 rudder_yaw_;
 };
 
