@@ -13,5 +13,5 @@
         <param name="Kp_ori" type="double" value="10"/>
         <param name="Kd_ori" type="double" value="1"/>
         
-        <param name="C_lift" type="double" value="0.001"/>
+        <param name="C_lift" type="double" value="0.000015"/>
 </launch>

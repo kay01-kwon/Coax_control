@@ -77,6 +77,8 @@ CoaxCTRL::CoaxCTRL()
     I_q_des.setZero();
     I_q_des(0) = 1;
 
+    rpy_error.setZero();
+
 }
 
 void CoaxCTRL::CallbackDesPos(const Pose & des_p)
@@ -124,7 +126,10 @@ void CoaxCTRL::CallbackPose(const Odometry & pose_msg)
     I_w << pose_msg.twist.twist.angular.x,
             pose_msg.twist.twist.angular.y,
             pose_msg.twist.twist.angular.z;
-    
+
+    PosControl();
+    OriControl();
+
 }
 
 void CoaxCTRL::PosControl()
@@ -134,7 +139,7 @@ void CoaxCTRL::PosControl()
             + Kd_pos*(I_v_des - I_v_CM)) - I_W_CM;
     
     thrust = sqrt(u_pos.transpose()*u_pos);
-    throttle = thrust / gear_ratio;
+    throttle = sqrt(thrust / gear_ratio / C_lift);
 
     throttle_clamping(throttle);
 
@@ -142,11 +147,11 @@ void CoaxCTRL::PosControl()
 
     roll_pitch_yaw(0) = asin(2*(qy*qz + qw*qx));
     
-    roll_pitch_yaw(1) = atan2(2*(qx*qz - qw*qy)/cos(roll_pitch_yaw(0)),
-    (1-2*qx*qx))/cos(roll_pitch_yaw(0));
+    roll_pitch_yaw(1) = -atan2(2*(qx*qz - qw*qy)/cos(roll_pitch_yaw(0)),
+    (1-2*(pow(qx,2)+pow(qy,2)))/cos(roll_pitch_yaw(0)));
     
-    roll_pitch_yaw(2) = atan2(2*(qx*qz - qw*qy)/cos(roll_pitch_yaw(0)),
-    (1-2*qx*qx))/cos(roll_pitch_yaw(0));
+    roll_pitch_yaw(2) = atan2(2*(qx*qy - qw*qz)/cos(roll_pitch_yaw(0)),
+    (1-2*(pow(qx,2)+pow(qz,2)))/cos(roll_pitch_yaw(0)));
 
     if(thrust > 0){
         des_roll_pitch_yaw(0) = asin((u_pos(0)*cos(des_yaw)+u_pos(1)*sin(des_yaw))/thrust) + hovering_rp(0);
@@ -164,6 +169,10 @@ void CoaxCTRL::PosControl()
 
 void CoaxCTRL::OriControl()
 {
+    rpy_error = des_roll_pitch_yaw - roll_pitch_yaw;
+
+    yaw_clamping();
+
     u_att = Kp_ori * (des_roll_pitch_yaw - roll_pitch_yaw) - Kd_ori*I_w;
     u_att(0) += eq_rp(0);
     u_att(1) += eq_rp(1);
@@ -205,6 +214,15 @@ double CoaxCTRL::signum(double &sign_ptr)
         return -1.0;
     return 0.0;
 }
+
+void CoaxCTRL::yaw_clamping()
+{
+    if (des_roll_pitch_yaw(2) > M_PI_2 && roll_pitch_yaw(2) < - M_PI_2)
+        rpy_error(2) = rpy_error(2) - 2*M_PI;
+    else if (des_roll_pitch_yaw(2) < -M_PI_2 && roll_pitch_yaw(2) > M_PI_2)
+        rpy_error(2) = rpy_error(2) + 2*M_PI;
+}
+
 
 CoaxCTRL::~CoaxCTRL()
 {

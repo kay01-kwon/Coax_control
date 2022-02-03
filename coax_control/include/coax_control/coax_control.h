@@ -59,6 +59,8 @@ class CoaxCTRL{
     void des_rp_clamping(double &des_roll_ptr, double &des_pitch_ptr);
 
     double signum(double &sign_ptr);
+
+    void yaw_clamping();
     
     // Destructor
     ~CoaxCTRL();
@@ -116,6 +118,7 @@ class CoaxCTRL{
     double thrust;
     uint8_t throttle;
     Vector3d des_roll_pitch_yaw;
+    Vector3d rpy_error;
     double des_yaw;
     double &qw_des = I_q_des(0);
     double &qx_des = I_q_des(1);
